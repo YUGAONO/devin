@@ -25,12 +25,6 @@
                  @change="handleFileSelect" 
                  class="file-input" />
           
-          <input ref="folderInput" 
-                 type="file" 
-                 accept="image/*" 
-                 webkitdirectory
-                 @change="handleFolderSelect" 
-                 class="file-input" />
           
           <div v-if="selectedFiles.length === 0" class="upload-placeholder">
             <div class="upload-icon">📁</div>
@@ -38,7 +32,6 @@
             <p>JPG, PNG, GIF形式に対応</p>
             <div class="upload-buttons">
               <button type="button" class="btn" @click="triggerFileInput">ファイルを選択</button>
-              <button type="button" class="btn btn-secondary" @click="triggerFolderInput">フォルダを選択</button>
             </div>
           </div>
           
@@ -118,7 +111,6 @@ export default {
     const isDragOver = ref(false)
     const successMessage = ref('')
     const fileInput = ref(null)
-    const folderInput = ref(null)
 
     const recentPhotos = computed(() => {
       return photosStore.photos.slice(0, 6)
@@ -132,9 +124,6 @@ export default {
       fileInput.value.click()
     }
 
-    const triggerFolderInput = () => {
-      folderInput.value.click()
-    }
 
     const handleFileSelect = (event) => {
       const files = Array.from(event.target.files)
@@ -143,12 +132,6 @@ export default {
       }
     }
 
-    const handleFolderSelect = (event) => {
-      const files = Array.from(event.target.files)
-      if (files.length > 0) {
-        setSelectedFiles(files)
-      }
-    }
 
     const handleDrop = (event) => {
       event.preventDefault()
@@ -195,9 +178,6 @@ export default {
       selectedFiles.value = []
       if (fileInput.value) {
         fileInput.value.value = ''
-      }
-      if (folderInput.value) {
-        folderInput.value.value = ''
       }
     }
 
@@ -260,12 +240,9 @@ export default {
       isDragOver,
       successMessage,
       fileInput,
-      folderInput,
       recentPhotos,
       triggerFileInput,
-      triggerFolderInput,
       handleFileSelect,
-      handleFolderSelect,
       handleDrop,
       removeFile,
       removeAllFiles,
