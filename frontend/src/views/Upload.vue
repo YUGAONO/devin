@@ -74,7 +74,7 @@
         <div v-for="photo in recentPhotos" :key="photo.id" class="recent-photo card">
           <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="recent-image" />
           <div class="recent-info">
-            <span class="recent-date">{{ formatDate(photo.uploadedAt) }}</span>
+            <span class="recent-date">{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
             <span class="recent-uploader">{{ photo.uploadedBy }}</span>
           </div>
         </div>

@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const { format, parseISO, isWithinInterval, subYears, startOfMonth, endOfMonth } = require('date-fns');
 const path = require('path');
 const fs = require('fs');
+const exifr = require('exifr');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,10 +36,27 @@ let photos = [];
 let comments = [];
 let likes = [];
 
-app.post('/api/photos', upload.single('photo'), (req, res) => {
+app.post('/api/photos', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No photo uploaded' });
+    }
+
+    const uploadedAt = new Date().toISOString();
+    let captureDate = uploadedAt;
+    
+    try {
+      const filePath = path.join(uploadsDir, req.file.filename);
+      const exifData = await exifr.parse(filePath, ['DateTimeOriginal', 'DateTime', 'CreateDate']);
+      
+      if (exifData) {
+        const exifDate = exifData.DateTimeOriginal || exifData.DateTime || exifData.CreateDate;
+        if (exifDate && exifDate instanceof Date) {
+          captureDate = exifDate.toISOString();
+        }
+      }
+    } catch (exifError) {
+      console.log('Could not extract EXIF data:', exifError.message);
     }
 
     const photo = {
@@ -46,7 +64,8 @@ app.post('/api/photos', upload.single('photo'), (req, res) => {
       filename: req.file.filename,
       originalName: req.file.originalname,
       url: `/uploads/${req.file.filename}`,
-      uploadedAt: new Date().toISOString(),
+      uploadedAt: uploadedAt,
+      captureDate: captureDate,
       uploadedBy: req.body.uploadedBy || 'User',
       likesCount: 0,
       commentsCount: 0
@@ -66,7 +85,7 @@ app.get('/api/photos', (req, res) => {
 
     if (year || month || yearsAgo) {
       filteredPhotos = photos.filter(photo => {
-        const photoDate = parseISO(photo.uploadedAt);
+        const photoDate = parseISO(photo.captureDate || photo.uploadedAt);
         
         if (yearsAgo && month) {
           const targetDate = subYears(new Date(), parseInt(yearsAgo));
@@ -94,7 +113,7 @@ app.get('/api/photos', (req, res) => {
       commentsCount: comments.filter(comment => comment.photoId === photo.id).length
     }));
 
-    res.json(photosWithCounts.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt)));
+    res.json(photosWithCounts.sort((a, b) => new Date(b.captureDate || b.uploadedAt) - new Date(a.captureDate || a.uploadedAt)));
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch photos' });
   }

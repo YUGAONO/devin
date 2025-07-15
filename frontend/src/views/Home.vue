@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="search-section">
-      <h2 class="section-title">📅 写真を検索</h2>
+      <h2 class="section-title">📅 撮影日で写真を検索</h2>
       <div class="search-form">
         <div class="search-row">
           <select v-model="searchFilters.yearsAgo" class="input search-select">
@@ -60,7 +60,7 @@
         
         <div class="photo-info">
           <div class="photo-meta">
-            <span class="upload-date">{{ formatDate(photo.uploadedAt) }}</span>
+            <span class="capture-date">{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
             <span class="uploaded-by">by {{ photo.uploadedBy }}</span>
           </div>
           
@@ -305,7 +305,7 @@ export default {
   color: #6b7280;
 }
 
-.upload-date {
+.capture-date {
   font-weight: 500;
 }
 
