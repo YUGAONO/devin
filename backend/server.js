@@ -36,45 +36,54 @@ let photos = [];
 let comments = [];
 let likes = [];
 
-app.post('/api/photos', upload.single('photo'), async (req, res) => {
+app.post('/api/photos', upload.array('photos', 50), async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No photo uploaded' });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'No photos uploaded' });
     }
 
+    const uploadedPhotos = [];
     const uploadedAt = new Date().toISOString();
-    let captureDate = uploadedAt;
-    
-    try {
-      const filePath = path.join(uploadsDir, req.file.filename);
-      const exifData = await exifr.parse(filePath, ['DateTimeOriginal', 'DateTime', 'CreateDate']);
+
+    for (const file of req.files) {
+      let captureDate = uploadedAt;
       
-      if (exifData) {
-        const exifDate = exifData.DateTimeOriginal || exifData.DateTime || exifData.CreateDate;
-        if (exifDate && exifDate instanceof Date) {
-          captureDate = exifDate.toISOString();
+      try {
+        const filePath = path.join(uploadsDir, file.filename);
+        const exifData = await exifr.parse(filePath, ['DateTimeOriginal', 'DateTime', 'CreateDate']);
+        
+        if (exifData) {
+          const exifDate = exifData.DateTimeOriginal || exifData.DateTime || exifData.CreateDate;
+          if (exifDate && exifDate instanceof Date) {
+            captureDate = exifDate.toISOString();
+          }
         }
+      } catch (exifError) {
+        console.log('Could not extract EXIF data for', file.filename, ':', exifError.message);
       }
-    } catch (exifError) {
-      console.log('Could not extract EXIF data:', exifError.message);
+
+      const photo = {
+        id: uuidv4(),
+        filename: file.filename,
+        originalName: file.originalname,
+        url: `/uploads/${file.filename}`,
+        uploadedAt: uploadedAt,
+        captureDate: captureDate,
+        uploadedBy: req.body.uploadedBy || 'User',
+        likesCount: 0,
+        commentsCount: 0
+      };
+
+      photos.push(photo);
+      uploadedPhotos.push(photo);
     }
 
-    const photo = {
-      id: uuidv4(),
-      filename: req.file.filename,
-      originalName: req.file.originalname,
-      url: `/uploads/${req.file.filename}`,
-      uploadedAt: uploadedAt,
-      captureDate: captureDate,
-      uploadedBy: req.body.uploadedBy || 'User',
-      likesCount: 0,
-      commentsCount: 0
-    };
-
-    photos.push(photo);
-    res.json(photo);
+    res.json({ 
+      message: `${uploadedPhotos.length} photos uploaded successfully`,
+      photos: uploadedPhotos 
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to upload photo' });
+    res.status(500).json({ error: 'Failed to upload photos' });
   }
 });
 

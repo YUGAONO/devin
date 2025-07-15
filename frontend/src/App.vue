@@ -3,7 +3,7 @@
     <header class="header">
       <nav class="nav">
         <router-link to="/" class="nav-link">
-          <h1 class="title">📸 カップル写真</h1>
+          <h1 class="title">📸 ピッピ2号のフォトブック</h1>
         </router-link>
         <router-link to="/upload" class="nav-link upload-btn">
           アップロード
