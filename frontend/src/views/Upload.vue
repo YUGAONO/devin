@@ -121,7 +121,21 @@ export default {
     })
 
     const triggerFileInput = () => {
-      fileInput.value.click()
+      try {
+        if (fileInput.value) {
+          fileInput.value.click()
+        } else {
+          const fileInputElement = document.querySelector('input[type="file"]')
+          if (fileInputElement) {
+            fileInputElement.click()
+          } else {
+            alert('ファイル選択機能に問題があります。ページを再読み込みしてください。')
+          }
+        }
+      } catch (error) {
+        console.error('Error in triggerFileInput:', error)
+        alert('ファイル選択でエラーが発生しました: ' + error.message)
+      }
     }
 
 
