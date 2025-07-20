@@ -199,6 +199,36 @@ app.get('/api/photos/:photoId/comments', (req, res) => {
   }
 });
 
+app.delete('/api/photos/:photoId', (req, res) => {
+  try {
+    const { photoId } = req.params;
+    
+    const photoIndex = photos.findIndex(photo => photo.id === photoId);
+    if (photoIndex === -1) {
+      return res.status(404).json({ error: 'Photo not found' });
+    }
+    
+    const photo = photos[photoIndex];
+    const filePath = path.join(uploadsDir, photo.filename);
+    
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (fileError) {
+      console.error('Failed to delete file:', fileError);
+    }
+    
+    photos.splice(photoIndex, 1);
+    comments = comments.filter(comment => comment.photoId !== photoId);
+    likes = likes.filter(like => like.photoId !== photoId);
+    
+    res.json({ message: 'Photo deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete photo' });
+  }
+});
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Couple Photo Sharing API is running' });
 });

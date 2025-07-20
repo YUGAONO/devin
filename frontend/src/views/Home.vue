@@ -58,6 +58,15 @@
           <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="photo-image" />
         </div>
         
+        <div class="capture-date-display">
+          <div v-if="photo.captureDate !== photo.uploadedAt" class="actual-capture-date">
+            📅 撮影日: {{ formatDate(photo.captureDate) }}
+          </div>
+          <div v-else class="no-exif-date">
+            📅 撮影日: 不明 (アップロード日: {{ formatDate(photo.uploadedAt) }})
+          </div>
+        </div>
+        
         <div class="photo-info">
           <div class="photo-meta">
             <span class="capture-date">{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
@@ -70,6 +79,9 @@
             </button>
             <button @click="toggleComments(photo.id)" class="action-btn comment-btn">
               💬 {{ photo.commentsCount }}
+            </button>
+            <button @click="deletePhoto(photo.id)" class="action-btn delete-btn">
+              🗑️ 削除
             </button>
           </div>
           
@@ -173,6 +185,23 @@ export default {
       }
     }
 
+    const deletePhoto = async (photoId) => {
+      if (!confirm('この写真を削除しますか？この操作は取り消せません。')) {
+        return
+      }
+      
+      try {
+        await photosStore.deletePhoto(photoId)
+        showComments.value[photoId] = false
+        delete comments.value[photoId]
+        delete newComments.value[photoId]
+        likedPhotos.value.delete(photoId)
+      } catch (error) {
+        console.error('Failed to delete photo:', error)
+        alert('写真の削除に失敗しました。')
+      }
+    }
+
     const formatDate = (dateString) => {
       const date = new Date(dateString)
       return date.toLocaleDateString('ja-JP', {
@@ -196,6 +225,7 @@ export default {
       isLiked,
       toggleComments,
       addComment,
+      deletePhoto,
       formatDate
     }
   }
@@ -334,6 +364,16 @@ export default {
   color: #dc2626;
 }
 
+.delete-btn {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .comments-section {
   border-top: 1px solid #e5e7eb;
   padding-top: 1rem;
@@ -377,6 +417,29 @@ export default {
   margin-top: 0.25rem;
 }
 
+.capture-date-display {
+  padding: 1rem 1.5rem 0.5rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.actual-capture-date {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.no-exif-date {
+  font-size: 0.9rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .search-row {
     flex-direction: column;
@@ -404,6 +467,15 @@ export default {
   
   .add-comment {
     flex-direction: column;
+  }
+  
+  .capture-date-display {
+    padding: 0.75rem 1rem 0.5rem 1rem;
+  }
+  
+  .actual-capture-date,
+  .no-exif-date {
+    font-size: 0.85rem;
   }
 }
 </style>

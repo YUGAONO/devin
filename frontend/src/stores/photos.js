@@ -115,6 +115,23 @@ export const usePhotosStore = defineStore('photos', {
         console.error('Error fetching comments:', error)
         return []
       }
+    },
+
+    async deletePhoto(photoId) {
+      try {
+        await axios.delete(`${API_BASE_URL}/photos/${photoId}`)
+        
+        const photoIndex = this.photos.findIndex(p => p.id === photoId)
+        if (photoIndex !== -1) {
+          this.photos.splice(photoIndex, 1)
+        }
+        
+        return { success: true, message: 'Photo deleted successfully' }
+      } catch (error) {
+        this.error = 'Failed to delete photo'
+        console.error('Error deleting photo:', error)
+        throw error
+      }
     }
   }
 })
