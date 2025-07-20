@@ -80,6 +80,9 @@
             <button @click="toggleComments(photo.id)" class="action-btn comment-btn">
               💬 {{ photo.commentsCount }}
             </button>
+            <button @click="deletePhoto(photo.id)" class="action-btn delete-btn">
+              🗑️ 削除
+            </button>
           </div>
           
           <div v-if="showComments[photo.id]" class="comments-section">
@@ -182,6 +185,23 @@ export default {
       }
     }
 
+    const deletePhoto = async (photoId) => {
+      if (!confirm('この写真を削除しますか？この操作は取り消せません。')) {
+        return
+      }
+      
+      try {
+        await photosStore.deletePhoto(photoId)
+        showComments.value[photoId] = false
+        delete comments.value[photoId]
+        delete newComments.value[photoId]
+        likedPhotos.value.delete(photoId)
+      } catch (error) {
+        console.error('Failed to delete photo:', error)
+        alert('写真の削除に失敗しました。')
+      }
+    }
+
     const formatDate = (dateString) => {
       const date = new Date(dateString)
       return date.toLocaleDateString('ja-JP', {
@@ -205,6 +225,7 @@ export default {
       isLiked,
       toggleComments,
       addComment,
+      deletePhoto,
       formatDate
     }
   }
@@ -341,6 +362,16 @@ export default {
 .like-btn.liked {
   background: #fef2f2;
   color: #dc2626;
+}
+
+.delete-btn {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
 .comments-section {
