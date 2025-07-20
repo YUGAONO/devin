@@ -58,6 +58,15 @@
           <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="photo-image" />
         </div>
         
+        <div class="capture-date-display">
+          <div v-if="photo.captureDate !== photo.uploadedAt" class="actual-capture-date">
+            📅 撮影日: {{ formatDate(photo.captureDate) }}
+          </div>
+          <div v-else class="no-exif-date">
+            📅 撮影日: 不明 (アップロード日: {{ formatDate(photo.uploadedAt) }})
+          </div>
+        </div>
+        
         <div class="photo-info">
           <div class="photo-meta">
             <span class="capture-date">{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
@@ -377,6 +386,29 @@ export default {
   margin-top: 0.25rem;
 }
 
+.capture-date-display {
+  padding: 1rem 1.5rem 0.5rem 1.5rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.actual-capture-date {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.no-exif-date {
+  font-size: 0.9rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 @media (max-width: 768px) {
   .search-row {
     flex-direction: column;
@@ -404,6 +436,15 @@ export default {
   
   .add-comment {
     flex-direction: column;
+  }
+  
+  .capture-date-display {
+    padding: 0.75rem 1rem 0.5rem 1rem;
+  }
+  
+  .actual-capture-date,
+  .no-exif-date {
+    font-size: 0.85rem;
   }
 }
 </style>
