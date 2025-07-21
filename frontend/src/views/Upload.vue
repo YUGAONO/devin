@@ -27,7 +27,7 @@
           <div v-if="!selectedFile" class="upload-placeholder">
             <div class="upload-icon">📁</div>
             <h3>写真を選択またはドラッグ&ドロップ</h3>
-            <p>JPG, PNG, GIF形式に対応</p>
+            <p>JPG, PNG, GIF, WEBP, HEIC形式に対応</p>
             <button type="button" class="btn">ファイルを選択</button>
           </div>
           
@@ -106,44 +106,21 @@ export default {
     })
 
     onMounted(() => {
-      console.log('Upload component mounted')
-      console.log('fileInput ref on mount:', fileInput.value)
-      console.log('selectedFile ref on mount:', selectedFile.value)
-      console.log('previewUrl ref on mount:', previewUrl.value)
       photosStore.fetchPhotos()
     })
 
     const triggerFileInput = () => {
-      console.log('triggerFileInput called')
-      console.log('fileInput.value:', fileInput.value)
       if (fileInput.value) {
-        console.log('Calling click() on file input')
         fileInput.value.click()
       } else {
-        console.error('fileInput.value is null or undefined')
         alert('ファイル入力の初期化に問題があります。ページを再読み込みしてください。')
       }
     }
 
     const handleFileSelect = (event) => {
-      console.log('handleFileSelect triggered', event)
-      console.log('event.target:', event.target)
-      console.log('event.target.files:', event.target.files)
-      console.log('event.target.files.length:', event.target.files?.length)
-      
       const file = event.target.files[0]
-      console.log('Selected file:', file)
-      
       if (file) {
-        console.log('File details:', {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified
-        })
         setSelectedFile(file)
-      } else {
-        console.log('No file selected or files array is empty')
       }
     }
 
@@ -157,46 +134,41 @@ export default {
       }
     }
 
-    const setSelectedFile = (file) => {
-      console.log('setSelectedFile called with:', file)
-      console.log('File type check:', file.type, 'starts with image:', file.type.startsWith('image/'))
+    const isImageFile = (file) => {
+      // First check MIME type if available
+      if (file.type && file.type.startsWith('image/')) {
+        return true
+      }
       
-      if (!file.type.startsWith('image/')) {
-        console.log('File is not an image, showing alert')
+      // Fallback to file extension check for files with missing/empty MIME type
+      const fileName = file.name.toLowerCase()
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif', '.bmp', '.svg', '.tiff', '.tif']
+      
+      return imageExtensions.some(ext => fileName.endsWith(ext))
+    }
+
+    const setSelectedFile = (file) => {
+      // Check MIME type first, then fallback to file extension
+      const isValidImage = isImageFile(file)
+      
+      if (!isValidImage) {
         alert('画像ファイルを選択してください')
         return
       }
       
-      console.log('Setting selectedFile.value to file')
       selectedFile.value = file
-      console.log('selectedFile.value after setting:', selectedFile.value)
       
-      console.log('Creating FileReader for preview')
       const reader = new FileReader()
       
       reader.onload = (e) => {
-        console.log('FileReader onload triggered')
-        console.log('Result type:', typeof e.target.result)
-        console.log('Result length:', e.target.result?.length)
         previewUrl.value = e.target.result
-        console.log('previewUrl.value set successfully')
       }
       
       reader.onerror = (e) => {
-        console.error('FileReader error:', e)
         alert('ファイルプレビューの生成に失敗しました: ' + e.target.error)
         previewUrl.value = null
       }
       
-      reader.onloadstart = () => {
-        console.log('FileReader started reading file')
-      }
-      
-      reader.onloadend = () => {
-        console.log('FileReader finished reading file')
-      }
-      
-      console.log('Calling reader.readAsDataURL')
       reader.readAsDataURL(file)
     }
 
