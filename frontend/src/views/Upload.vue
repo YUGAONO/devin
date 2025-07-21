@@ -29,10 +29,10 @@
           <div v-if="selectedFiles.length === 0" class="upload-placeholder">
             <div class="upload-icon">📁</div>
             <h3>写真を選択またはドラッグ&ドロップ</h3>
-            <p>JPG, PNG, GIF形式に対応</p>
-            <div class="upload-buttons">
-              <button type="button" class="btn" @click="triggerFileInput">ファイルを選択</button>
-            </div>
+
+            <p>JPG, PNG, GIF, WEBP, HEIC形式に対応</p>
+            <button type="button" class="btn">ファイルを選択</button>
+
           </div>
           
           <div v-if="selectedFiles.length > 0" class="files-preview">
@@ -121,6 +121,7 @@ export default {
     })
 
     const triggerFileInput = () => {
+
       try {
         if (fileInput.value) {
           fileInput.value.click()
@@ -135,6 +136,7 @@ export default {
       } catch (error) {
         console.error('Error in triggerFileInput:', error)
         alert('ファイル選択でエラーが発生しました: ' + error.message)
+
       }
     }
 
@@ -157,14 +159,31 @@ export default {
       }
     }
 
-    const setSelectedFiles = (files) => {
-      const imageFiles = files.filter(file => file.type.startsWith('image/'))
+
+    const isImageFile = (file) => {
+      // First check MIME type if available
+      if (file.type && file.type.startsWith('image/')) {
+        return true
+      }
       
-      if (imageFiles.length === 0) {
+      // Fallback to file extension check for files with missing/empty MIME type
+      const fileName = file.name.toLowerCase()
+      const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif', '.bmp', '.svg', '.tiff', '.tif']
+      
+      return imageExtensions.some(ext => fileName.endsWith(ext))
+    }
+
+    const setSelectedFile = (file) => {
+      // Check MIME type first, then fallback to file extension
+      const isValidImage = isImageFile(file)
+      
+      if (!isValidImage) {
+
         alert('画像ファイルを選択してください')
         return
       }
       
+
       if (imageFiles.length !== files.length) {
         alert(`${files.length - imageFiles.length}個の非画像ファイルがスキップされました`)
       }
@@ -186,6 +205,7 @@ export default {
 
     const removeFile = (index) => {
       selectedFiles.value.splice(index, 1)
+
     }
 
     const removeAllFiles = () => {
