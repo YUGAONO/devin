@@ -38,7 +38,7 @@ export const usePhotosStore = defineStore('photos', {
       
       try {
         const formData = new FormData()
-        formData.append('photo', file)
+        formData.append('photos', file)
         formData.append('uploadedBy', uploadedBy)
         
         const response = await axios.post(`${API_BASE_URL}/photos`, formData, {
@@ -47,8 +47,15 @@ export const usePhotosStore = defineStore('photos', {
           }
         })
         
-        this.photos.unshift(response.data)
-        return response.data
+        if (response.data.photos) {
+          response.data.photos.forEach(photo => {
+            this.photos.unshift(photo)
+          })
+          return response.data.photos[0] // Return first photo for compatibility
+        } else {
+          this.photos.unshift(response.data)
+          return response.data
+        }
       } catch (error) {
         this.error = 'Failed to upload photo'
         console.error('Error uploading photo:', error)

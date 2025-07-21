@@ -21,40 +21,52 @@
           <input ref="fileInput" 
                  type="file" 
                  accept="image/*" 
+                 multiple
                  @change="handleFileSelect" 
                  class="file-input" />
           
-          <div v-if="!selectedFile" class="upload-placeholder">
+          
+          <div v-if="selectedFiles.length === 0" class="upload-placeholder">
             <div class="upload-icon">📁</div>
             <h3>写真を選択またはドラッグ&ドロップ</h3>
+
             <p>JPG, PNG, GIF, WEBP, HEIC形式に対応</p>
             <button type="button" class="btn">ファイルを選択</button>
+
           </div>
           
-          <div v-if="selectedFile" class="file-preview">
-            <img v-if="previewUrl" :src="previewUrl" alt="Preview" class="preview-image" />
-            <div class="file-info">
-              <h4>{{ selectedFile.name }}</h4>
-              <p>{{ formatFileSize(selectedFile.size) }}</p>
-              <button @click.stop="removeFile" class="btn btn-secondary">削除</button>
+          <div v-if="selectedFiles.length > 0" class="files-preview">
+            <div class="files-header">
+              <h4>選択された写真 ({{ selectedFiles.length }}枚)</h4>
+              <button @click="removeAllFiles" class="btn btn-secondary">すべて削除</button>
+            </div>
+            <div class="files-grid">
+              <div v-for="(file, index) in selectedFiles" :key="index" class="file-preview-item">
+                <img v-if="file.previewUrl" :src="file.previewUrl" alt="Preview" class="preview-image-small" />
+                <div class="file-info-small">
+                  <p class="file-name">{{ file.name }}</p>
+                  <p class="file-size">{{ formatFileSize(file.size) }}</p>
+                  <button @click="removeFile(index)" class="btn-remove">×</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         
-        <div v-if="selectedFile" class="upload-options">
+        <div v-if="selectedFiles.length > 0" class="upload-options">
           <div class="form-group">
             <label for="uploadedBy" class="form-label">アップロード者</label>
             <select v-model="uploadedBy" id="uploadedBy" class="input">
-              <option value="User1">パートナー1</option>
-              <option value="User2">パートナー2</option>
+              <option value="ソヒョン">ソヒョン</option>
+              <option value="ゆうが">ゆうが</option>
             </select>
           </div>
           
-          <button @click="uploadPhoto" 
-                  :disabled="photosStore.loading || !selectedFile" 
+          <button @click="uploadPhotos" 
+                  :disabled="photosStore.loading || selectedFiles.length === 0" 
                   class="btn upload-btn">
             <span v-if="photosStore.loading">アップロード中...</span>
-            <span v-else>📤 アップロード</span>
+            <span v-else>📤 {{ selectedFiles.length }}枚をアップロード</span>
           </button>
         </div>
       </div>
@@ -94,9 +106,8 @@ export default {
     const photosStore = usePhotosStore()
     const router = useRouter()
     
-    const selectedFile = ref(null)
-    const previewUrl = ref(null)
-    const uploadedBy = ref('User1')
+    const selectedFiles = ref([])
+    const uploadedBy = ref('ソヒョン')
     const isDragOver = ref(false)
     const successMessage = ref('')
     const fileInput = ref(null)
@@ -110,29 +121,44 @@ export default {
     })
 
     const triggerFileInput = () => {
-      if (fileInput.value) {
-        fileInput.value.click()
-      } else {
-        alert('ファイル入力の初期化に問題があります。ページを再読み込みしてください。')
+
+      try {
+        if (fileInput.value) {
+          fileInput.value.click()
+        } else {
+          const fileInputElement = document.querySelector('input[type="file"]')
+          if (fileInputElement) {
+            fileInputElement.click()
+          } else {
+            alert('ファイル選択機能に問題があります。ページを再読み込みしてください。')
+          }
+        }
+      } catch (error) {
+        console.error('Error in triggerFileInput:', error)
+        alert('ファイル選択でエラーが発生しました: ' + error.message)
+
       }
     }
 
+
     const handleFileSelect = (event) => {
-      const file = event.target.files[0]
-      if (file) {
-        setSelectedFile(file)
+      const files = Array.from(event.target.files)
+      if (files.length > 0) {
+        setSelectedFiles(files)
       }
     }
+
 
     const handleDrop = (event) => {
       event.preventDefault()
       isDragOver.value = false
       
-      const files = event.dataTransfer.files
+      const files = Array.from(event.dataTransfer.files)
       if (files.length > 0) {
-        setSelectedFile(files[0])
+        setSelectedFiles(files)
       }
     }
+
 
     const isImageFile = (file) => {
       // First check MIME type if available
@@ -152,46 +178,72 @@ export default {
       const isValidImage = isImageFile(file)
       
       if (!isValidImage) {
+
         alert('画像ファイルを選択してください')
         return
       }
       
-      selectedFile.value = file
-      
-      const reader = new FileReader()
-      
-      reader.onload = (e) => {
-        previewUrl.value = e.target.result
+
+      if (imageFiles.length !== files.length) {
+        alert(`${files.length - imageFiles.length}個の非画像ファイルがスキップされました`)
       }
       
-      reader.onerror = (e) => {
-        alert('ファイルプレビューの生成に失敗しました: ' + e.target.error)
-        previewUrl.value = null
-      }
+      const filesWithPreviews = imageFiles.map(file => {
+        const fileObj = { ...file, previewUrl: null }
+        
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          fileObj.previewUrl = e.target.result
+        }
+        reader.readAsDataURL(file)
+        
+        return fileObj
+      })
       
-      reader.readAsDataURL(file)
+      selectedFiles.value = filesWithPreviews
     }
 
-    const removeFile = () => {
-      selectedFile.value = null
-      previewUrl.value = null
+    const removeFile = (index) => {
+      selectedFiles.value.splice(index, 1)
+
+    }
+
+    const removeAllFiles = () => {
+      selectedFiles.value = []
       if (fileInput.value) {
         fileInput.value.value = ''
       }
     }
 
-    const uploadPhoto = async () => {
-      if (!selectedFile.value) return
+    const uploadPhotos = async () => {
+      if (selectedFiles.value.length === 0) return
       
       try {
-        await photosStore.uploadPhoto(selectedFile.value, uploadedBy.value)
-        successMessage.value = '写真が正常にアップロードされました！'
-        removeFile()
+        let successCount = 0
+        let failCount = 0
+        
+        for (const file of selectedFiles.value) {
+          try {
+            await photosStore.uploadPhoto(file, uploadedBy.value)
+            successCount++
+          } catch (error) {
+            console.error('Upload failed for file:', file.name, error)
+            failCount++
+          }
+        }
+        
+        if (failCount === 0) {
+          successMessage.value = `${successCount}枚の写真が正常にアップロードされました！`
+        } else {
+          successMessage.value = `${successCount}枚成功、${failCount}枚失敗しました`
+        }
+        
+        removeAllFiles()
         
         setTimeout(() => {
           successMessage.value = ''
           router.push('/')
-        }, 2000)
+        }, 3000)
       } catch (error) {
         console.error('Upload failed:', error)
       }
@@ -217,8 +269,7 @@ export default {
 
     return {
       photosStore,
-      selectedFile,
-      previewUrl,
+      selectedFiles,
       uploadedBy,
       isDragOver,
       successMessage,
@@ -228,7 +279,8 @@ export default {
       handleFileSelect,
       handleDrop,
       removeFile,
-      uploadPhoto,
+      removeAllFiles,
+      uploadPhotos,
       formatFileSize,
       formatDate
     }
@@ -297,6 +349,101 @@ export default {
 .upload-placeholder p {
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
+}
+
+.upload-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.files-preview {
+  text-align: left;
+}
+
+.files-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.files-header h4 {
+  margin: 0;
+  color: #374151;
+}
+
+.files-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.file-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+}
+
+.preview-image-small {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.file-info-small {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.file-name {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+  margin: 0 0 0.25rem 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-size {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.btn-remove {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.btn-remove:hover {
+  background: #dc2626;
 }
 
 .file-preview {
