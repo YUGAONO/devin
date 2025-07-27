@@ -173,33 +173,21 @@ export default {
       return imageExtensions.some(ext => fileName.endsWith(ext))
     }
 
-    const setSelectedFile = (file) => {
-      // Check MIME type first, then fallback to file extension
-      const isValidImage = isImageFile(file)
-      
-      if (!isValidImage) {
-
-        alert('画像ファイルを選択してください')
-        return
-      }
-      
-
+    const setSelectedFiles = (files) => {
+      // 画像ファイルのみ抽出
+      const imageFiles = files.filter(isImageFile)
       if (imageFiles.length !== files.length) {
         alert(`${files.length - imageFiles.length}個の非画像ファイルがスキップされました`)
       }
-      
       const filesWithPreviews = imageFiles.map(file => {
-        const fileObj = { ...file, previewUrl: null }
-        
+        const fileObj = { previewUrl: null, originalFile: file, name: file.name, size: file.size }
         const reader = new FileReader()
         reader.onload = (e) => {
           fileObj.previewUrl = e.target.result
         }
         reader.readAsDataURL(file)
-        
         return fileObj
       })
-      
       selectedFiles.value = filesWithPreviews
     }
 
@@ -217,14 +205,12 @@ export default {
 
     const uploadPhotos = async () => {
       if (selectedFiles.value.length === 0) return
-      
       try {
         let successCount = 0
         let failCount = 0
-        
         for (const file of selectedFiles.value) {
           try {
-            await photosStore.uploadPhoto(file, uploadedBy.value)
+            await photosStore.uploadPhoto(file.originalFile || file, uploadedBy.value)
             successCount++
           } catch (error) {
             console.error('Upload failed for file:', file.name, error)
