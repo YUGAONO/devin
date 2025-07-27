@@ -22,6 +22,7 @@
                  type="file" 
                  accept="image/*" 
                  multiple
+                 webkitdirectory
                  @change="handleFileSelect" 
                  class="file-input" />
           
@@ -149,11 +150,48 @@ export default {
     }
 
 
-    const handleDrop = (event) => {
+    // DataTransferItemListから再帰的にファイルを取得
+    const getAllFilesFromItems = async (items) => {
+      const files = []
+      for (const item of items) {
+        if (item.kind === 'file') {
+          const entry = item.webkitGetAsEntry && item.webkitGetAsEntry()
+          if (entry) {
+            await traverseFileTree(entry, files)
+          } else {
+            const file = item.getAsFile()
+            if (file) files.push(file)
+          }
+        }
+      }
+      return files
+    }
+
+    const traverseFileTree = async (item, files) => {
+      if (item.isFile) {
+        await new Promise(resolve => item.file(file => { files.push(file); resolve(); }))
+      } else if (item.isDirectory) {
+        const reader = item.createReader()
+        await new Promise(resolve => {
+          reader.readEntries(async entries => {
+            for (const entry of entries) {
+              await traverseFileTree(entry, files)
+            }
+            resolve()
+          })
+        })
+      }
+    }
+
+    const handleDrop = async (event) => {
       event.preventDefault()
       isDragOver.value = false
-      
-      const files = Array.from(event.dataTransfer.files)
+      let files = []
+      if (event.dataTransfer.items && event.dataTransfer.items.length > 0) {
+        files = await getAllFilesFromItems(event.dataTransfer.items)
+      } else {
+        files = Array.from(event.dataTransfer.files)
+      }
       if (files.length > 0) {
         setSelectedFiles(files)
       }

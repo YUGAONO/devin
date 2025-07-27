@@ -52,6 +52,22 @@
       </div>
     </div>
 
+    <!-- 最新アップロード写真カルーセル -->
+    <div v-if="photosStore.photos.length > 0" class="carousel-section small-carousel">
+      <h3 class="section-title">最新アップロード写真</h3>
+      <div class="carousel-wrapper">
+        <div class="carousel">
+          <div v-for="(photo, idx) in carouselPhotos" :key="photo.id" :class="['carousel-item', { active: idx === carouselIndex }]">
+            <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="carousel-image" />
+            <div class="carousel-info">
+              <span>{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
+              <span>{{ photo.uploadedBy }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="photosStore.photos.length > 0" class="photos-grid">
       <div v-for="photo in photosStore.photos" :key="photo.id" class="photo-card card">
         <div class="photo-container">
@@ -111,7 +127,7 @@
 
 <script>
 import { usePhotosStore } from '../stores/photos'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 
 export default {
   name: 'Home',
@@ -126,9 +142,25 @@ export default {
     const comments = ref({})
     const newComments = ref({})
     const likedPhotos = ref(new Set())
-
+    const carouselIndex = ref(0)
+    const carouselPhotos = computed(() => photosStore.photos.slice(0, 7))
+    let carouselTimer = null
+    let lastIndex = ref(0)
+    const startCarousel = () => {
+      carouselTimer = setInterval(() => {
+        lastIndex.value = carouselIndex.value
+        carouselIndex.value = (carouselIndex.value + 1) % carouselPhotos.value.length
+      }, 2500)
+    }
+    const stopCarousel = () => {
+      if (carouselTimer) clearInterval(carouselTimer)
+    }
     onMounted(() => {
       photosStore.fetchPhotos()
+      startCarousel()
+    })
+    onUnmounted(() => {
+      stopCarousel()
     })
 
     const searchPhotos = () => {
@@ -219,14 +251,16 @@ export default {
       showComments,
       comments,
       newComments,
+      likedPhotos,
       searchPhotos,
       clearSearch,
       toggleLike,
       isLiked,
       toggleComments,
       addComment,
-      deletePhoto,
-      formatDate
+      formatDate,
+      carouselIndex,
+      carouselPhotos
     }
   }
 }
@@ -292,6 +326,117 @@ export default {
 .empty-content p {
   color: #6b7280;
   margin-bottom: 2rem;
+}
+
+.carousel-section {
+  margin-bottom: 2rem;
+}
+
+.carousel-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.carousel {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.carousel-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.carousel-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
+.carousel-info {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-top: 1px solid #e5e7eb;
+  width: 100%;
+  text-align: center;
+}
+
+.carousel-btn {
+  background: #f3f4f6;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.carousel-btn:hover {
+  background: #e5e7eb;
+}
+
+.carousel-btn:focus {
+  outline: none;
+}
+
+.carousel-btn:nth-child(1) {
+  left: 1rem;
+}
+
+.carousel-btn:nth-child(2) {
+  right: 1rem;
+}
+
+.small-carousel {
+  max-width: 500px;
+  margin: 0 auto 2rem auto;
+}
+
+.small-carousel .carousel-wrapper {
+  width: 100%;
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.small-carousel .carousel-image {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.16);
+  transition: transform 0.7s cubic-bezier(.4,0,.2,1), opacity 0.7s cubic-bezier(.4,0,.2,1);
+}
+
+.small-carousel .carousel-item {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s cubic-bezier(.4,0,.2,1);
+}
+
+.small-carousel .carousel-item.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.small-carousel .carousel-info {
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 0.7rem;
 }
 
 .photos-grid {
