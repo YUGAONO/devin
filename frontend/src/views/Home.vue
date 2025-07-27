@@ -60,10 +60,10 @@
         
         <div class="capture-date-display">
           <div v-if="photo.captureDate !== photo.uploadedAt" class="actual-capture-date">
-            📅 撮影日: {{ formatDate(photo.captureDate) }}
+            撮影日: {{ formatDate(photo.captureDate) }}
           </div>
           <div v-else class="no-exif-date">
-            📅 撮影日: 不明 (アップロード日: {{ formatDate(photo.uploadedAt) }})
+            撮影日: わかんない~ (アップロード日: {{ formatDate(photo.uploadedAt) }})
           </div>
         </div>
         
