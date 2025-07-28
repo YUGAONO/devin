@@ -85,7 +85,7 @@
       </div>
       <div v-else class="recent-grid">
         <div v-for="photo in recentPhotos" :key="photo.id" class="recent-photo card">
-          <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="recent-image" />
+          <img :src="`${import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')}${photo.url}`" :alt="photo.originalName" class="recent-image" />
           <div class="recent-info">
             <span class="recent-date">{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
             <span class="recent-uploader">{{ photo.uploadedBy }}</span>

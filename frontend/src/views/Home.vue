@@ -58,7 +58,7 @@
       <div class="carousel-wrapper">
         <div class="carousel">
           <div v-for="(photo, idx) in carouselPhotos" :key="photo.id" :class="['carousel-item', { active: idx === carouselIndex }]">
-            <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="carousel-image" />
+            <img :src="`${import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')}${photo.url}`" :alt="photo.originalName" class="carousel-image" />
             <div class="carousel-info">
               <span>{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
               <span>{{ photo.uploadedBy }}</span>
@@ -71,7 +71,7 @@
     <div v-if="photosStore.photos.length > 0" class="photos-grid">
       <div v-for="photo in photosStore.photos" :key="photo.id" class="photo-card card">
         <div class="photo-container">
-          <img :src="`http://localhost:3000${photo.url}`" :alt="photo.originalName" class="photo-image" />
+          <img :src="`${import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')}${photo.url}`" :alt="photo.originalName" class="photo-image" />
         </div>
         
         <div class="capture-date-display">
