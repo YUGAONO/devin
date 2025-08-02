@@ -21,8 +21,8 @@
           <input ref="fileInput" 
                  type="file" 
                  accept="image/*" 
+                 capture="environment"
                  multiple
-                 webkitdirectory
                  @change="handleFileSelect" 
                  class="file-input" />
           

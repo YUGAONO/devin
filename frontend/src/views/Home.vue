@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <div class="search-section">
-      <h2 class="section-title">📅 撮影日で写真を検索</h2>
+      <h2 class="section-title">撮影日で写真を検索</h2>
       <div class="search-form">
         <div class="search-row">
           <select v-model="searchFilters.yearsAgo" class="input search-select">
@@ -219,7 +219,7 @@ export default {
     }
 
     const deletePhoto = async (photoId) => {
-      if (!confirm('この写真を削除しますか？この操作は取り消せません。')) {
+      if (!confirm('ほんとに消しちゃうの-？')) {
         return
       }
       
@@ -231,7 +231,7 @@ export default {
         likedPhotos.value.delete(photoId)
       } catch (error) {
         console.error('Failed to delete photo:', error)
-        alert('写真の削除に失敗しました。')
+        alert('写真の削除に失敗。なんかミスったかも。')
       }
     }
 
