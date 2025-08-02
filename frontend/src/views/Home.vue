@@ -262,7 +262,8 @@ export default {
       formatDate,
       carouselIndex,
       carouselPhotos,
-      apiBaseUrl
+      apiBaseUrl,
+      deletePhoto
     }
   }
 }
