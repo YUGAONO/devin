@@ -85,7 +85,7 @@
       </div>
       <div v-else class="recent-grid">
         <div v-for="photo in recentPhotos" :key="photo.id" class="recent-photo card">
-          <img :src="`${import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')}${photo.url}`" :alt="photo.originalName" class="recent-image" />
+          <img :src="`${apiBaseUrl}${photo.url}`" :alt="photo.originalName" class="recent-image" />
           <div class="recent-info">
             <span class="recent-date">{{ formatDate(photo.captureDate || photo.uploadedAt) }}</span>
             <span class="recent-uploader">{{ photo.uploadedBy }}</span>
@@ -104,6 +104,7 @@ import { useRouter } from 'vue-router'
 export default {
   name: 'Upload',
   setup() {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '')
     const photosStore = usePhotosStore()
     const router = useRouter()
     
@@ -306,7 +307,8 @@ export default {
       removeAllFiles,
       uploadPhotos,
       formatFileSize,
-      formatDate
+      formatDate,
+      apiBaseUrl
     }
   }
 }
